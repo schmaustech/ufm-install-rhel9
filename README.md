@@ -142,17 +142,24 @@ cockpit dhcpv6-client http https ssh
 UFM requires SeLinux to be disabled as per their instructions so we will set it to disabled.
 
 ~~~bash
-# sed -i "s/SELINUX=.*/SELINUX=disabled/" /etc/sysconfig/selinux
+# sed -i "s/SELINUX=.*/SELINUX=disabled/" /etc/selinux/config 
 ~~~
 
 Reboot the host for the change to take effect.
+
+Validate otherwise UFM will complain.
+
+~~~bash
+# sestatus
+SELinux status:                 disabled
+~~~
 
 ## Install Software Dependencies 
 
 There are a variety of software packages that need to be installed as dependencies before UFM can be installed.  We will capture those here for installation.
 
 ~~~bash
-# dnf install -y wget bc sshpass lftp zip rsync telnet qperf dos2unix httpd php net-snmp net-snmp-libs net-snmp-utils mod_ssl libnsl libxslt sqlite mod_session cairo apr-util-openssl net-tools docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# dnf install -y wget bc mod_ldap sshpass lftp zip rsync telnet qperf dos2unix httpd php net-snmp net-snmp-libs net-snmp-utils mod_ssl libnsl libxslt sqlite mod_session cairo apr-util-openssl net-tools docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ~~~
 
 Start, enable and check status of Docker
@@ -349,7 +356,94 @@ Complete!
 
 ## Install UFM Software
 
+Download the UFM software from the [NVIDIA Licensing Portal](https://ui.licensing.nvidia.com/software).   Pro-tip:  In the browser use the Inspect->Network tool to grab the download URL and then use wget on the actual host to save time.
+
+Once the UFM software is on the host gzip and untar the contents into the /tmp directory then change into the directory path.  Then run the `install.sh` script.
+
+~~~bash
+# cd /tmp
+# ls ufm*
+check_ports.sh  check_prereq.sh  common_defines  functions  handle_ufmapp_user.sh  install_common  install.sh  ufm_backup.sh  ufm-repo  uninstall.sh  upgrade.sh
+# cd ufm*
+# /tmp/ufm-6.23.1-6.el9.x86_64
+
+# ./install.sh
+Do you want to install UFM Enterprise  [y|n]? y
+
+UFM IB PREREQUISITE TEST
+
+Installed distribution                                      [OK]
+Server architecture                                         [OK]
+NVIDIA Host Infiniband Networking Driver version            [OK]
+Other SM                                                    [OK]
+Timezone configuration                                      [OK]
+IPtables service                                            [OK]
+Required RPM(s)                                             [OK]
+Sudoers directory existence                                 [OK]
+Sudoers directory inclusion                                 [OK]
+Conflicting RPM(s)                                          [OK]
+IB interface                                                [OK]
+Localhost resolving                                         [OK]
+Hostname resolving                                          [OK]
+SELinux disabled                                            [OK]
+Available disk space                                        [OK]
+Write permissions on /tmp for other                         [OK]
+Virtual IP Port                                             [OK]
+Ufmapp user definitions                                     [OK]
+
+
+Checking that all required ports are available
+Checking tcp ports
+Checking state of port 3307
+Port 3307 is free
+Checking state of port 2222
+Port 2222 is free
+Checking state of port 8088
+Port 8088 is free
+Checking state of port 8080
+Port 8080 is free
+Checking state of port 8081
+Port 8081 is free
+Checking state of port 8082
+Port 8082 is free
+Checking state of port 8083
+Port 8083 is free
+Checking state of port 8089
+Port 8089 is free
+Checking udp ports
+Checking state of port 6306
+Port 6306 is free
+Checking state of port 8005
+Port 8005 is free
+Checking tcp ports allowed for httpd
+Checking state of port 443
+Port 443 is free
+Checking state of port 80
+Port 80 is free
+
+nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com: All prerequisite tests passed. See /tmp/ufm_prereq.log for more details
+Installing UFM...
+ [*] Restoring HA flags...
+Default plugins bundle doesn't exist, skipping stage.
+Make sure the bundle tarball is in the /tmp directory.
+Or run it manually: /opt/ufm/scripts/manage_ufm_plugins deploy-bundle -f plugins_bundle_path
+[*] UFM installation log : /tmp/ufm_install_10515.log
+[*] UFM Installation finished successfully.
+[*] To enable UFM on startup run:
+systemctl enable ufm-enterprise.service
+[*] To Start UFM Please run:
+systemctl start ufm-enterprise.service
+~~~
+
+Do not start the service yet as we have a few configuration tasks to complete.
+
 ## Configure UFM
+
+Before we can start UFM we need to make a few changes to the initial configuration.  First we need to set the infiniband interface to use.  Let's find the interface first.
+
+~~~bash
+
+~~~
 
 ~~~bash
 # usermod -aG docker $USER
