@@ -442,12 +442,80 @@ Do not start the service yet as we have a few configuration tasks to complete.
 Before we can start UFM we need to make a few changes to the initial configuration.  First we need to set the infiniband interface to use.  Let's find the interface first.
 
 ~~~bash
-
+# find /sys/class/net -mindepth 1 -maxdepth 1 -lname '*virtual*' -prune -o -printf '%f\n'
+ibp13s0
+eno12409
+eno12399
+enp55s0np0
 ~~~
+
+We can tell from the output above our infiniband interface is `ibp13s0` as the others are ethernet.  We will use this to set the infiniband interface in the UFM configuration file.
 
 ~~~bash
-# usermod -aG docker $USER
+# sed -i "s/fabric_interface =.*/fabric_interface = ibp13s0/" /opt/ufm/conf/gv.cfg
 ~~~
+
+We also need to set the management interface in the configuration to our primary ethernet interface on the host which is `eno12399`.
+
+~~~bash
+# sed -i "s/mgmt_interface =.*/mgmt_interface = eno12399/" /opt/ufm/conf/gv.cfg
+# sed -i "s/ufma_interfaces =.*/ufma_interfaces = eno12399/" /opt/ufm/conf/gv.cfg
+~~~
+
+Next let's enable Telemetry history in the configuration.
+
+~~~bash
+# sed -i "s/history_enabled =.*/history_enabled = true/" /opt/ufm/conf/gv.cfg 
+~~~
+
+Now we need to make sure a couple of users are added to the Docker group on the system in order for the plugins web interface upload mechanism to work appropriately.  We will be adding users: ufmapp and nginx.
+
+~~~bash
+# usermod -aG docker ufmapp
+
+# usermod -aG docker nginx
+~~~
+
+UFM has the concept of plugins to add on other features or enhancements.  Some plugins, not all of them, come in a plugin bundle which can be obtained from the [NVIDIA Licensing Portal](https://ui.licensing.nvidia.com/software).  We have gone ahead and download the latest bundle to our UFM system.   First we need to untar the bundle and unzip the contents.
+
+~~~bash
+# tar -xf ufm_plugins_bundle_20251113-0836.tar
+
+# gzip -d ufm-plugin-clusterminder_1.1.14-1293.amd64.tgz ufm-plugin-utm_1.23.1-38321085.x86_64.tgz ufm-plugin-tfs_1.1.2-0.tgz ufm-plugin-gnmi_telemetry_1.3.8-5.tgz ufm-plugin-ndt_1.1.1-25.gz ufm-plugin-kpi_1.0.10-0.tgz ufm-plugin-pmc_1.19.35.tgz ufm-plugin-cablevalidation_1.7.1-4_x86_64.tgz ufm-plugin-ib-link-resiliency_1.1.5-7.x86_64.tgz
+~~~
+
+Next we can pre-load the plugins into Docker.  Here I am loading all the plugins but one might only load those that they need for their environment.  I should also note that plugins can be loaded via the UFM web interface once the services are up and running.
+
+~~~bash
+# docker load -i ufm-plugin-clusterminder_1.1.14-1293.amd64.tar
+Loaded image: mellanox/ufm-plugin-clusterminder:1.1.14-1293
+
+# docker load -i ufm-plugin-utm_1.23.1-38321085.x86_64.tar
+Loaded image: harbor.mellanox.com/collectx/gitlab/utm/x86_64/ufm-plugin-utm:1.23.1-38321085
+
+# docker load -i ufm-plugin-tfs_1.1.2-0.tar
+Loaded image: mellanox/ufm-plugin-tfs:1.1.2-0
+
+# docker load -i ufm-plugin-ib-link-resiliency_1.1.5-7.x86_64.tar
+Loaded image: mellanox/ufm-plugin-ib-link-resiliency:1.1.5-7
+
+# docker load -i ufm-plugin-gnmi_telemetry_1.3.8-5.tar
+Loaded image: mellanox/ufm-plugin-gnmi_telemetry:1.3.8-5
+
+# docker load -i ufm-plugin-ndt_1.1.1-25
+Loaded image: mellanox/ufm-plugin-ndt:1.1.1-25
+
+# docker load -i ufm-plugin-kpi_1.0.10-0.tar
+Loaded image: mellanox/ufm-plugin-kpi:1.0.10-0
+
+# docker load -i ufm-plugin-pmc_1.19.35.tar
+Loaded image: harbor.mellanox.com/collectx/gitlab/x86_64/ufm-plugin-pmc:1.19.35
+
+# docker load -i ufm-plugin-cablevalidation_1.7.1-4_x86_64.tar
+Loaded image: mellanox/ufm-plugin-cablevalidation:1.7.1-4
+~~~
+
+This completes all the pre-configuration activities.
 
 ## Start UFM Services
 
