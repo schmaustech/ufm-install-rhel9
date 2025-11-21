@@ -15,7 +15,7 @@
 
 ## Environment
 
-The environment consists of a R760xa server with RHEL running on it.
+The environment consists of a R760xa server with RHEL 9.7 running on it.
 
 ~~~bash
 # cat /etc/redhat-release 
@@ -518,5 +518,103 @@ Loaded image: mellanox/ufm-plugin-cablevalidation:1.7.1-4
 This completes all the pre-configuration activities.
 
 ## Start UFM Services
+
+Now we can finally start the UFM services with the following.
+
+~~~bash
+# systemctl start ufm-enterprise.service
+~~~
+
+Optionally we can set the services to start when the host comes up from a reboot.
+
+~~~bash
+# systemctl enable ufm-enterprise.service
+~~~
+
+Finally let's check the status of the services.
+
+~~~bash
+# systemctl status ufm-enterprise.service
+● ufm-enterprise.service - UFM Enterprise
+     Loaded: loaded (/usr/lib/systemd/system/ufm-enterprise.service; disabled; preset: disabled)
+     Active: active (exited) since Fri 2025-11-21 16:09:12 EST; 8s ago
+    Process: 14655 ExecStart=/etc/init.d/ufmd start (code=exited, status=0/SUCCESS)
+   Main PID: 14655 (code=exited, status=0/SUCCESS)
+      Tasks: 588 (limit: 1643822)
+     Memory: 548.3M (peak: 571.2M)
+        CPU: 7.555s
+     CGroup: /system.slice/ufm-enterprise.service
+             ├─15131 /opt/ufm/opensm/sbin/opensm --config /opt/ufm/files/conf/opensm/opensm.conf
+             ├─15138 osm_crashd
+             ├─15625 /opt/ufm/sharp2/bin/sharp_am -O /opt/ufm/files/conf/sharp/sharp_am.cfg
+             ├─15884 /opt/ufm/telemetry/venv3/bin/python3 /opt/ufm/telemetry/venv3/bin/supervisord --config=/opt/ufm/files/conf/telemetry/supervisord.conf
+             ├─16122 /opt/ufm/telemetry/venv3/bin/python3 /opt/ufm/telemetry/venv3/bin/supervisord --config=/opt/ufm/files/conf/secondary_telemetry/supervisord.conf
+             ├─16147 /opt/ufm/telemetry/bin/launch_ibdiagnet --config /opt/ufm/files/conf/telemetry/launch_ibdiagnet_config.ini
+             ├─16148 /opt/ufm/telemetry/bin/watcher --config /opt/ufm/files/conf/telemetry/launch_ibdiagnet_config.ini
+             ├─16149 /opt/ufm/telemetry/bin/launch_ibdiagnet --config /opt/ufm/files/conf/telemetry/launch_ibdiagnet_config.ini
+             ├─16150 /opt/ufm/telemetry/bin/watcher --config /opt/ufm/files/conf/telemetry/launch_ibdiagnet_config.ini
+             ├─16151 timeout 10010 /opt/ufm/telemetry/bin/ibdiagnet --long_run_timeout 1000 --long_run_iteration 10000 -o /opt/ufm/files/log -i mlx5_0 --mads_timeout 50 --config_file /opt/ufm/conf/opensm/ibdiag>
+             ├─16152 /opt/ufm/telemetry/bin/ibdiagnet --long_run_timeout 1000 --long_run_iteration 10000 -o /opt/ufm/files/log -i mlx5_0 --mads_timeout 50 --config_file /opt/ufm/conf/opensm/ibdiag.conf --key_up>
+             ├─16199 /opt/ufm/telemetry/bin/launch_ibdiagnet --config /opt/ufm/files/conf/secondary_telemetry/launch_ibdiagnet_config.ini
+             ├─16200 /opt/ufm/telemetry/bin/watcher --config /opt/ufm/files/conf/secondary_telemetry/launch_ibdiagnet_config.ini
+             ├─16201 /opt/ufm/telemetry/bin/launch_ibdiagnet --config /opt/ufm/files/conf/secondary_telemetry/launch_ibdiagnet_config.ini
+             ├─16202 /opt/ufm/telemetry/bin/watcher --config /opt/ufm/files/conf/secondary_telemetry/launch_ibdiagnet_config.ini
+             ├─16206 timeout 12010 /opt/ufm/telemetry/bin/ibdiagnet --long_run_timeout 300000 --long_run_iteration 40 -o /opt/ufm/files/log/secondary_telemetry -i mlx5_0 --pm_pause 0 --config_file /opt/ufm/conf>
+             ├─16207 /opt/ufm/telemetry/bin/ibdiagnet --long_run_timeout 300000 --long_run_iteration 40 -o /opt/ufm/files/log/secondary_telemetry -i mlx5_0 --pm_pause 0 --config_file /opt/ufm/conf/opensm/ibdiag>
+             ├─16497 /opt/ufm/venv_ufm/bin/python3 -W ignore::DeprecationWarning -O /opt/ufm/gvvm/authentication_server/auth_server_main.pyc
+             ├─16780 "/opt/ufm/venv_ufm/bin/python3 -O /opt/ufm/unhealthyports/upcore/unhealthy_ports_main.pyc"
+             ├─16864 /opt/ufm/venv_ufm/bin/python3 /opt/ufm/ufmtelemetrysampling/sampling.pyc
+             └─17088 /opt/ufm/venv_ufm/bin/python3 /opt/ufm/ufmhealth/UfmHealthRunner.pyc --config_file /opt/ufm/files/conf/UFMHealthConfiguration.xml --second_config_file /opt/ufm/files/conf/UFMInfraHealthConf>
+
+Nov 21 16:09:08 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com su[16712]: pam_unix(su:session): session closed for user ufmapp
+Nov 21 16:09:08 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufmd[14743]: Starting UFM main module:  [  OK  ]
+Nov 21 16:09:11 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufmd[14743]: Starting UnhealthyPorts:  [  OK  ]
+Nov 21 16:09:11 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufmd[14743]: Starting Telemetry Sampling:  [  OK  ]
+Nov 21 16:09:11 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com sudo[16898]:     root : PWD=/opt/ufm/gvvm/infra ; USER=root ; COMMAND=/sbin/apachectl graceful
+Nov 21 16:09:11 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com sudo[16898]: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=0)
+Nov 21 16:09:11 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com sudo[16898]: pam_unix(sudo:session): session closed for user root
+Nov 21 16:09:12 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com crontab[17107]: (root) LIST (root)
+Nov 21 16:09:12 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com crontab[17100]: (root) REPLACE (root)
+Nov 21 16:09:12 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com systemd[1]: Finished UFM Enterprise.
+~~~
+
+If the service does not start make sure there is no other Subnet Manager running on the fabric.  The following error will show in the service status if that is the case.
+
+~~~bash
+# systemctl start ufm-enterprise.service
+Job for ufm-enterprise.service failed because the control process exited with error code.
+See "systemctl status ufm-enterprise.service" and "journalctl -xeu ufm-enterprise.service" for details.
+[root@nvd-srv-26 conf]# systemctl status ufm-enterprise.service
+× ufm-enterprise.service - UFM Enterprise
+     Loaded: loaded (/usr/lib/systemd/system/ufm-enterprise.service; disabled; preset: disabled)
+     Active: failed (Result: exit-code) since Fri 2025-11-21 10:34:22 EST; 5s ago
+    Process: 14049 ExecStart=/etc/init.d/ufmd start (code=exited, status=1/FAILURE)
+   Main PID: 14049 (code=exited, status=1/FAILURE)
+        CPU: 380ms
+
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufmd[14137]: <13>Nov 21 10:34:22 ufm: Validation of UFM configuration files failed!
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com crontab[14218]: (root) LIST (root)
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com crontab[14221]: (root) REPLACE (root)
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufm[14238]: Other SM is in the fabric: lid:1, guid:0xfc6a1c0300e7ecc0, priority:15, state:SMINFO_MASTER
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufmd[14137]: Other SM is in the fabric: lid:1, guid:0xfc6a1c0300e7ecc0, priority:15, state:SMINFO_MASTER
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufm[14241]: Other SM is master in the fabric. Please stop all other SM and start UFM.
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com ufmd[14137]: <13>Nov 21 10:34:22 ufm: Other SM is master in the fabric. Please stop all other SM and start UFM.
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com systemd[1]: ufm-enterprise.service: Main process exited, code=exited, status=1/FAILURE
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com systemd[1]: ufm-enterprise.service: Failed with result 'exit-code'.
+Nov 21 10:34:22 nvd-srv-26.nvidia.eng.rdu2.dc.redhat.com systemd[1]: Failed to start UFM Enterprise.
+~~~
+
+We can also look at the status of the license on our system.
+
+~~~bash
+# ufmlicense 
+|------------------------------------------------------------------------------------------------------------------------------------------|
+|   Customer ID   |     SN     |        swName      |        Type         |   MAC Address   |   Exp. Date   |Limit| Functionality | Status |
+|------------------------------------------------------------------------------------------------------------------------------------------|
+|986799359        |1234567899  |UFM Enterprise      |Evaluation           |NA               |2025-12-21     |1024 |Advanced       |Valid   |
+|------------------------------------------------------------------------------------------------------------------------------------------|
+~~~
+
+If all went well we should be able to login to the UFM Web UI.  The default credentials are admin with password as 123456.
 
 
